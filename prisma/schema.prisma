@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"  // หรือ mysql, sqlite
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Intensity {
+  low
+  medium
+  high
+}
+
+enum GoalType {
+  weekly
+  monthly
+  custom
+}
+
+// Models
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String?
+  avatarUrl    String?  @map("avatar_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  workouts     Workout[]
+  goals        Goal[]
+
+  @@map("users")
+}
+
+model Workout {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  exerciseType    String    @map("exercise_type")
+  durationMinutes Int       @map("duration_minutes")
+  caloriesBurned  Decimal   @map("calories_burned") @db.Decimal(6, 2)
+  distanceKm      Decimal?  @map("distance_km") @db.Decimal(6, 2)
+  intensity       Intensity @default(medium)
+  notes           String?   @db.Text
+  exerciseDate    DateTime  @map("exercise_date")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, exerciseDate])
+  @@index([exerciseType])
+  @@map("workouts")
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String?
+  targetType  String   @map("target_type")  // 'workouts', 'calories', 'duration', 'distance'
+  targetValue Decimal  @map("target_value") @db.Decimal(10, 2)
+  currentValue Decimal @map("current_value") @db.Decimal(10, 2) @default(0)
+  period      String   // 'daily', 'weekly', 'monthly'
+  status      String   @default("active") // 'active', 'completed', 'failed'
+  
+  startDate   DateTime @map("start_date") @default(now())
+  endDate     DateTime @map("end_date")
+  completedAt DateTime? @map("completed_at")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("goals")
+}
