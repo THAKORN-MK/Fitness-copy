@@ -12,6 +12,7 @@ import {
   Settings,
   X
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface SidebarProps {
@@ -19,7 +20,14 @@ interface SidebarProps {
   onClose: () => void
 }
 
-const menuItems = [
+type MenuItem = {
+  label: string
+  icon: LucideIcon
+  href: string
+  badge?: string
+}
+
+const menuItems: MenuItem[] = [
   {
     label: 'Dashboard',
     icon: LayoutDashboard,
@@ -57,7 +65,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Overlay for mobile */}
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -65,14 +72,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           'fixed left-0 top-0 z-50 h-full w-64 transform border-r bg-white transition-transform duration-200 ease-in-out lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        {/* Mobile Header */}
         <div className="flex h-16 items-center justify-between border-b px-4 lg:hidden">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🏃</span>
@@ -83,7 +88,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Button>
         </div>
 
-        {/* Menu Items */}
         <nav className="flex flex-col gap-1 p-4">
           {menuItems.map((item) => {
             const isActive = pathname === item.href
@@ -113,12 +117,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           })}
         </nav>
 
-        {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 border-t p-4">
           <div className="rounded-lg bg-blue-50 p-3">
-            <p className="text-xs font-medium text-blue-700">
-              💡 Tips
-            </p>
+            <p className="text-xs font-medium text-blue-700">💡 Tips</p>
             <p className="mt-1 text-xs text-blue-600">
               ออกกำลังกายสม่ำเสมอจะช่วยให้สุขภาพดีขึ้น!
             </p>
