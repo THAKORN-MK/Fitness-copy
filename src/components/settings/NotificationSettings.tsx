@@ -1,110 +1,77 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Bell, Mail, Target, BarChart } from 'lucide-react'
+import { Bell, Mail, Target, BarChart2 } from 'lucide-react'
 
 interface NotificationSettingsProps {
-  notifications: {
-    email: boolean
-    push: boolean
-    goalReminders: boolean
-    weeklyReport: boolean
-  }
+  notifications: { email: boolean; push: boolean; goalReminders: boolean; weeklyReport: boolean }
   onNotificationChange: (key: string, value: boolean) => void
 }
 
-export default function NotificationSettings({ 
-  notifications, 
-  onNotificationChange 
-}: NotificationSettingsProps) {
+const items = [
+  { key:'email',        icon:Mail,     color:'#818cf8', label:'แจ้งเตือนทางอีเมล',   desc:'รับการแจ้งเตือนสำคัญทางอีเมล',            disabled:false },
+  { key:'push',         icon:Bell,     color:'#a78bfa', label:'Push Notifications',   desc:'รับการแจ้งเตือนแบบ Push (เร็วๆ นี้)',      disabled:true  },
+  { key:'goalReminders',icon:Target,   color:'#4ade80', label:'แจ้งเตือนเป้าหมาย',   desc:'เตือนความคืบหน้าและเป้าหมายใกล้หมดเวลา', disabled:false },
+  { key:'weeklyReport', icon:BarChart2,color:'#f59e0b', label:'รายงานประจำสัปดาห์',  desc:'รับสรุปสถิติทุกวันอาทิตย์',               disabled:false },
+]
+
+export default function NotificationSettings({ notifications, onNotificationChange }: NotificationSettingsProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>การแจ้งเตือน</CardTitle>
-        <CardDescription>
-          จัดการการรับการแจ้งเตือนต่างๆ
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center justify-between p-3 border rounded-lg">
-          <div className="flex items-center gap-3">
-            <Mail className="h-5 w-5 text-blue-500" />
-            <div>
-              <Label htmlFor="email" className="font-medium cursor-pointer">
-                แจ้งเตือนทางอีเมล
-              </Label>
-              <p className="text-sm text-gray-500">
-                รับการแจ้งเตือนสำคัญทางอีเมล
-              </p>
+    <>
+      <style>{`
+        .ns{border-radius:20px;padding:20px;
+          background:rgba(13,13,26,.82);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px)}
+        .ns-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#fff;
+          letter-spacing:-.2px;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+        .ns-title-dot{width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#818cf8,#f59e0b)}
+        .ns-sub{font-size:12px;color:rgba(255,255,255,.45);margin-bottom:14px}
+        .ns-row{display:flex;align-items:center;justify-content:space-between;gap:12px;
+          padding:12px 14px;border-radius:13px;border:1px solid rgba(255,255,255,.07);
+          background:rgba(255,255,255,.03);margin-bottom:8px;transition:border-color .18s}
+        .ns-row:last-child{margin-bottom:0}
+        .ns-row:hover:not(.disabled){border-color:rgba(255,255,255,.12)}
+        .ns-row.disabled{opacity:.45}
+        .ns-ico{width:34px;height:34px;border-radius:9px;flex-shrink:0;
+          display:flex;align-items:center;justify-content:center}
+        .ns-lbl{font-size:13px;font-weight:600;color:#fff;margin-bottom:2px}
+        .ns-desc{font-size:11px;color:rgba(255,255,255,.4)}
+        /* custom toggle */
+        .ns-toggle{position:relative;width:42px;height:24px;flex-shrink:0;cursor:pointer}
+        .ns-toggle input{opacity:0;width:0;height:0;position:absolute}
+        .ns-slider{position:absolute;inset:0;border-radius:24px;
+          background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);
+          transition:all .22s}
+        .ns-slider::before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;
+          background:#fff;left:2px;top:2px;transition:transform .22s,background .22s;
+          box-shadow:0 1px 4px rgba(0,0,0,.4)}
+        .ns-toggle input:checked + .ns-slider{background:rgba(129,140,248,.4);border-color:rgba(129,140,248,.6)}
+        .ns-toggle input:checked + .ns-slider::before{transform:translateX(18px);background:#818cf8}
+      `}</style>
+      <div className="ns">
+        <div className="ns-title"><div className="ns-title-dot"/>การแจ้งเตือน</div>
+        <div className="ns-sub">จัดการการรับการแจ้งเตือนต่างๆ</div>
+        {items.map(({ key, icon: Icon, color, label, desc, disabled }) => (
+          <div key={key} className={`ns-row ${disabled ? 'disabled' : ''}`}>
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <div className="ns-ico" style={{ background:`${color}18`, border:`1px solid ${color}30` }}>
+                <Icon size={15} style={{ color }}/>
+              </div>
+              <div>
+                <div className="ns-lbl">{label}{disabled && <span style={{ fontSize:10, marginLeft:6, color:'rgba(255,255,255,.35)', fontWeight:400 }}>เร็วๆ นี้</span>}</div>
+                <div className="ns-desc">{desc}</div>
+              </div>
             </div>
+            <label className="ns-toggle">
+              <input
+                type="checkbox"
+                checked={notifications[key as keyof typeof notifications]}
+                disabled={disabled}
+                onChange={e => !disabled && onNotificationChange(key, e.target.checked)}
+              />
+              <span className="ns-slider"/>
+            </label>
           </div>
-          <Switch
-            id="email"
-            checked={notifications.email}
-            onCheckedChange={(checked) => onNotificationChange('email', checked)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between p-3 border rounded-lg">
-          <div className="flex items-center gap-3">
-            <Bell className="h-5 w-5 text-purple-500" />
-            <div>
-              <Label htmlFor="push" className="font-medium cursor-pointer">
-                Push Notifications
-              </Label>
-              <p className="text-sm text-gray-500">
-                รับการแจ้งเตือนแบบ Push (เร็วๆ นี้)
-              </p>
-            </div>
-          </div>
-          <Switch
-            id="push"
-            checked={notifications.push}
-            onCheckedChange={(checked) => onNotificationChange('push', checked)}
-            disabled
-          />
-        </div>
-
-        <div className="flex items-center justify-between p-3 border rounded-lg">
-          <div className="flex items-center gap-3">
-            <Target className="h-5 w-5 text-green-500" />
-            <div>
-              <Label htmlFor="goalReminders" className="font-medium cursor-pointer">
-                แจ้งเตือนเป้าหมาย
-              </Label>
-              <p className="text-sm text-gray-500">
-                เตือนความคืบหน้าและเป้าหมายที่ใกล้หมดเวลา
-              </p>
-            </div>
-          </div>
-          <Switch
-            id="goalReminders"
-            checked={notifications.goalReminders}
-            onCheckedChange={(checked) => onNotificationChange('goalReminders', checked)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between p-3 border rounded-lg">
-          <div className="flex items-center gap-3">
-            <BarChart className="h-5 w-5 text-orange-500" />
-            <div>
-              <Label htmlFor="weeklyReport" className="font-medium cursor-pointer">
-                รายงานประจำสัปดาห์
-              </Label>
-              <p className="text-sm text-gray-500">
-                รับสรุปสถิติทุกวันอาทิตย์
-              </p>
-            </div>
-          </div>
-          <Switch
-            id="weeklyReport"
-            checked={notifications.weeklyReport}
-            onCheckedChange={(checked) => onNotificationChange('weeklyReport', checked)}
-          />
-        </div>
-      </CardContent>
-    </Card>
+        ))}
+      </div>
+    </>
   )
 }

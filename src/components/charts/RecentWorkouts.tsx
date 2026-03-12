@@ -9,67 +9,163 @@ interface RecentWorkoutsProps {
   workouts: any[]
 }
 
+const TYPE_GLOW: Record<string, string> = {
+  'วิ่ง':          'rgba(129,140,248,0.28)',
+  'วิ่งเทรล':      'rgba(129,140,248,0.28)',
+  'ปั่นจักรยาน':  'rgba(251,191,36,0.22)',
+  'ว่ายน้ำ':       'rgba(34,211,238,0.24)',
+  'เดิน':          'rgba(74,222,128,0.22)',
+  'กระโดดเชือก':  'rgba(250,204,21,0.24)',
+  'ยิม':           'rgba(168,85,247,0.26)',
+  'โยคะ':          'rgba(244,114,182,0.24)',
+  'เอโรบิก':      'rgba(236,72,153,0.26)',
+  'มวย':           'rgba(248,113,113,0.28)',
+  'บาสเก็ตบอล':   'rgba(251,146,60,0.24)',
+  'ฟุตบอล':       'rgba(74,222,128,0.24)',
+  'เทนนิส':       'rgba(251,191,36,0.22)',
+  'แบดมินตัน':    'rgba(129,140,248,0.22)',
+  'อื่นๆ':        'rgba(167,139,250,0.22)',
+}
+
+const TYPE_COLOR: Record<string, string> = {
+  'วิ่ง':          '#818cf8',
+  'วิ่งเทรล':      '#6366f1',
+  'ปั่นจักรยาน':  '#fbbf24',
+  'ว่ายน้ำ':       '#22d3ee',
+  'เดิน':          '#4ade80',
+  'กระโดดเชือก':  '#facc15',
+  'ยิม':           '#a855f7',
+  'โยคะ':          '#f472b6',
+  'เอโรบิก':      '#ec4899',
+  'มวย':           '#f87171',
+  'บาสเก็ตบอล':   '#fb923c',
+  'ฟุตบอล':       '#4ade80',
+  'เทนนิส':       '#fbbf24',
+  'แบดมินตัน':    '#818cf8',
+  'อื่นๆ':        '#a78bfa',
+}
+
+const TYPE_EMOJI: Record<string, string> = {
+  'วิ่ง':          '🏃',
+  'วิ่งเทรล':      '🏔️',
+  'ปั่นจักรยาน':  '🚴',
+  'ว่ายน้ำ':       '🏊',
+  'เดิน':          '🚶',
+  'กระโดดเชือก':  '🪢',
+  'ยิม':           '🏋️',
+  'โยคะ':          '🧘',
+  'เอโรบิก':      '💃',
+  'มวย':           '🥊',
+  'บาสเก็ตบอล':   '🏀',
+  'ฟุตบอล':       '⚽',
+  'เทนนิส':       '🎾',
+  'แบดมินตัน':    '🏸',
+  'อื่นๆ':        '⚡',
+}
+
 export default function RecentWorkouts({ workouts }: RecentWorkoutsProps) {
-  const getIntensityColor = (intensity: string) => {
-    switch (intensity) {
-      case 'low': return 'bg-green-100 text-green-700'
-      case 'medium': return 'bg-yellow-100 text-yellow-700'
-      case 'high': return 'bg-red-100 text-red-700'
-      default: return 'bg-gray-100 text-gray-700'
-    }
-  }
-
-  const getIntensityLabel = (intensity: string) => {
-    switch (intensity) {
-      case 'low': return 'เบา'
-      case 'medium': return 'ปานกลาง'
-      case 'high': return 'หนัก'
-      default: return intensity
-    }
-  }
-
   return (
-    <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <Card style={{
+      border: '1px solid rgba(139,92,246,0.2)',
+      background: 'rgba(13,10,35,0.75)',
+      backdropFilter: 'blur(20px)',
+      boxShadow: '0 0 40px rgba(109,40,217,0.12), inset 0 1px 0 rgba(255,255,255,0.05)',
+      borderRadius: 20,
+    }}>
       <CardHeader>
-        <CardTitle className="text-lg">🏃 การออกกำลังกายล่าสุด</CardTitle>
+        <CardTitle style={{ color: '#e2d9f3', fontSize: 16, fontWeight: 700 }}>
+          🏃 การออกกำลังกายล่าสุด
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {workouts.length > 0 ? (
-          <div className="space-y-3">
-            {workouts.map((workout, index) => (
-              <div 
-                key={workout.id}
-                className="flex items-start justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:from-gray-100 hover:to-gray-200 transition-all duration-200 border border-gray-200/50 animate-fadeInUp"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-bold text-gray-900">{workout.exerciseType}</h4>
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getIntensityColor(workout.intensity)}`}>
-                      {getIntensityLabel(workout.intensity)}
-                    </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {workouts.map((workout, index) => {
+              const col = TYPE_COLOR[workout.exerciseType] || '#a78bfa'
+              const glow = TYPE_GLOW[workout.exerciseType] || 'rgba(139,92,246,0.18)'
+              const emoji = TYPE_EMOJI[workout.exerciseType] || '⚡'
+              return (
+                <div
+                  key={workout.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    padding: '14px 16px',
+                    borderRadius: 14,
+                    background: `linear-gradient(135deg, ${glow}, rgba(13,10,35,0.6))`,
+                    border: `1px solid ${col}33`,
+                    boxShadow: `0 0 16px ${glow}`,
+                    transition: 'all 0.2s',
+                    animation: 'fadeInUp 0.4s ease both',
+                    animationDelay: `${index * 80}ms`,
+                  }}
+                >
+                  {/* Icon */}
+                  <div style={{
+                    width: 44, height: 44,
+                    borderRadius: 12,
+                    background: `${col}22`,
+                    border: `1px solid ${col}44`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 22,
+                    flexShrink: 0,
+                    boxShadow: `0 0 12px ${col}44`,
+                  }}>
+                    {emoji}
                   </div>
-                  <p className="text-xs text-gray-500 mb-2">
-                    {format(new Date(workout.exerciseDate), 'PPP', { locale: th })}
-                  </p>
-                  <div className="flex flex-wrap gap-4">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-700">
-                      <Clock className="h-4 w-4 text-blue-600" />
-                      <span className="font-medium">{workout.durationMinutes} นาที</span>
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 700, color: col, fontSize: 15, marginBottom: 3 }}>
+                      {workout.exerciseType}
+                    </p>
+                    <p style={{ color: '#7c6fa0', fontSize: 12 }}>
+                      {format(new Date(workout.exerciseDate), 'PPP', { locale: th })}
+                    </p>
+                  </div>
+
+                  {/* Stats */}
+                  <div style={{ display: 'flex', gap: 16, flexShrink: 0 }}>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      padding: '5px 10px',
+                      borderRadius: 8,
+                      background: 'rgba(139,92,246,0.12)',
+                      border: '1px solid rgba(139,92,246,0.2)',
+                    }}>
+                      <Clock style={{ width: 13, height: 13, color: '#818cf8' }} />
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>
+                        {workout.durationMinutes} นาที
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-700">
-                      <Flame className="h-4 w-4 text-orange-600" />
-                      <span className="font-medium">{workout.caloriesBurned} cal</span>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      padding: '5px 10px',
+                      borderRadius: 8,
+                      background: 'rgba(236,72,153,0.12)',
+                      border: '1px solid rgba(236,72,153,0.2)',
+                    }}>
+                      <Flame style={{ width: 13, height: 13, color: '#ec4899' }} />
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#f9a8d4' }}>
+                        {workout.caloriesBurned} cal
+                      </span>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500">
-            <Activity className="h-10 w-10 mx-auto mb-3 text-gray-300" />
-            <p className="text-sm font-medium">ยังไม่มีข้อมูล</p>
+          <div style={{
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            height: 200, color: '#7c6fa0', gap: 10,
+          }}>
+            <Activity style={{ width: 40, height: 40, color: '#4c1d95' }} />
+            <p style={{ fontSize: 14 }}>ยังไม่มีข้อมูล</p>
           </div>
         )}
       </CardContent>

@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/lib/store/authStore'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'react-hot-toast'
-import { Loader2, Trash2, Upload } from 'lucide-react'
+import { Loader2, Trash2, Activity, Flame, Clock, Route } from 'lucide-react'
 import ProfileHeader from '@/components/profile/ProfileHeader'
 import EditProfileForm from '@/components/profile/EditProfileForm'
 import ChangePasswordForm from '@/components/profile/ChangePasswordForm'
@@ -15,146 +13,128 @@ export default function ProfilePage() {
   const { token } = useAuthStore()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
 
-  useEffect(() => {
-    fetchProfile()
-  }, [])
+  useEffect(() => { fetchProfile() }, [])
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('/api/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setUser(data.user)
-      } else {
-        toast.error('ไม่สามารถโหลดโปรไฟล์ได้')
-      }
-    } catch (error) {
-      console.error('Fetch profile error:', error)
-      toast.error('เกิดข้อผิดพลาด')
-    } finally {
-      setLoading(false)
-    }
+      const res = await fetch('/api/profile', { headers: { Authorization: `Bearer ${token}` } })
+      if (res.ok) { const d = await res.json(); setUser(d.user) }
+      else toast.error('ไม่สามารถโหลดโปรไฟล์ได้')
+    } catch { toast.error('เกิดข้อผิดพลาด') }
+    finally { setLoading(false) }
   }
 
-  const handleUploadAvatar = () => {
-    toast('ฟีเจอร์อัปโหลดรูปภาพจะเปิดใช้งานเร็วๆ นี้', {
-      icon: '📸'
-    })
-  }
+  const statCards = [
+    { icon: Activity, color:'#818cf8', val: user?.totalWorkouts ?? 0,                                  unit:'ครั้ง', label:'ออกกำลังกาย' },
+    { icon: Flame,    color:'#f472b6', val: Math.round(user?.totalCalories ?? 0).toLocaleString(),     unit:'cal',   label:'แคลอรี่' },
+    { icon: Clock,    color:'#22d3ee', val: Math.floor((user?.totalDuration ?? 0) / 60),               unit:'ชม.',   label:'เวลา' },
+    { icon: Route,    color:'#4ade80', val: Number(user?.totalDistance ?? 0).toFixed(1),               unit:'km',    label:'ระยะทาง' },
+  ]
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-      </div>
-    )
-  }
+  if (loading) return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:400 }}>
+      <Loader2 size={32} style={{ color:'#818cf8', animation:'spin 1s linear infinite' }}/>
+    </div>
+  )
 
-  if (!user) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-600">ไม่พบข้อมูลโปรไฟล์</p>
-      </div>
-    )
-  }
+  if (!user) return (
+    <div style={{ textAlign:'center', padding:'48px 0', color:'rgba(255,255,255,.5)', fontFamily:'Sarabun,sans-serif' }}>
+      ไม่พบข้อมูลโปรไฟล์
+    </div>
+  )
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">โปรไฟล์</h1>
-        <p className="text-gray-600 mt-1">
-          จัดการข้อมูลส่วนตัวและการตั้งค่าบัญชี
-        </p>
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Sarabun:wght@400;500;600&display=swap');
+        .pp{font-family:'Sarabun',sans-serif;color:#fff;display:flex;flex-direction:column;gap:16px}
+        .pp-hd-title{font-family:'Syne',sans-serif;font-size:clamp(20px,2.5vw,26px);font-weight:800;
+          letter-spacing:-.6px;margin-bottom:4px}
+        .pp-hd-sub{font-size:13px;color:rgba(255,255,255,.5)}
+        /* stat grid */
+        .pp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+        @media(max-width:580px){.pp-stats{grid-template-columns:1fr 1fr}}
+        .pp-stat{border-radius:18px;padding:16px 18px;position:relative;overflow:hidden;
+          background:rgba(13,13,26,.8);border:1px solid rgba(255,255,255,.07);backdrop-filter:blur(12px)}
+        .pp-stat::after{content:'';position:absolute;bottom:-18px;right:-18px;width:70px;height:70px;
+          border-radius:50%;filter:blur(22px);opacity:.45;pointer-events:none}
+        .pp-stat-lbl{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+        .pp-stat-val{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;letter-spacing:-1px;line-height:1;color:#fff}
+        .pp-stat-unit{font-size:12px;color:rgba(255,255,255,.4);margin-left:4px;font-family:'Sarabun',sans-serif}
+        /* 2-col */
+        .pp-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        @media(max-width:640px){.pp-2col{grid-template-columns:1fr}}
+        /* danger zone */
+        .pp-danger{border-radius:20px;padding:20px;
+          background:rgba(13,13,26,.82);border:1px solid rgba(248,113,113,.18);backdrop-filter:blur(14px)}
+        .pp-danger-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;
+          color:#f87171;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+        .pp-danger-sub{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:14px}
+        .pp-danger-row{display:flex;align-items:center;justify-content:space-between;gap:12px;
+          padding:14px;border-radius:13px;background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.12)}
+        .pp-danger-del-btn{display:inline-flex;align-items:center;gap:6px;
+          padding:9px 16px;border-radius:10px;border:none;cursor:pointer;flex-shrink:0;
+          font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#fff;
+          background:linear-gradient(135deg,#991b1b,#ef4444);
+          box-shadow:0 3px 14px rgba(239,68,68,.3);transition:all .18s}
+        .pp-danger-del-btn:hover{box-shadow:0 5px 20px rgba(239,68,68,.5)}
+      `}</style>
 
-      {/* Profile Header */}
-      <ProfileHeader user={user} onUploadAvatar={handleUploadAvatar} />
+      <div className="pp">
+        {/* Header */}
+        <div>
+          <div className="pp-hd-title">👤 โปรไฟล์</div>
+          <div className="pp-hd-sub">จัดการข้อมูลส่วนตัวและการตั้งค่าบัญชี</div>
+        </div>
 
-      {/* Two Columns */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Edit Profile */}
-        <EditProfileForm user={user} onUpdate={fetchProfile} />
+        {/* Profile banner + avatar */}
+        <ProfileHeader user={user} onUpdate={fetchProfile}/>
 
-        {/* Change Password */}
-        <ChangePasswordForm />
-      </div>
-
-      {/* Account Statistics */}
-      <Card>
-        <CardHeader>
-          <CardTitle>สถิติบัญชี</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <p className="text-2xl font-bold text-blue-600">
-                {user.totalWorkouts}
-              </p>
-              <p className="text-sm text-gray-600">การออกกำลังกายทั้งหมด</p>
+        {/* Stat cards */}
+        <div className="pp-stats">
+          {statCards.map(({ icon: Icon, color, val, unit, label }) => (
+            <div className="pp-stat" key={label} style={{ '--gc': color } as any}>
+              <style>{`.pp-stat:nth-child(${statCards.indexOf({icon:Icon,color,val,unit,label})+1})::after{background:${color}}`}</style>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+                <div style={{ width:28, height:28, borderRadius:8, background:`${color}18`,
+                  border:`1px solid ${color}30`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <Icon size={13} style={{ color }}/>
+                </div>
+                <div className="pp-stat-lbl" style={{ marginBottom:0 }}>{label}</div>
+              </div>
+              <div>
+                <span className="pp-stat-val">{val}</span>
+                <span className="pp-stat-unit">{unit}</span>
+              </div>
             </div>
-            <div className="text-center p-4 bg-orange-50 rounded-lg">
-              <p className="text-2xl font-bold text-orange-600">
-                {Math.round(user.totalCalories).toLocaleString()}
-              </p>
-              <p className="text-sm text-gray-600">แคลอรี่ที่เผาผลาญ</p>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <p className="text-2xl font-bold text-green-600">
-                {Math.floor(user.totalDuration / 60)}
-              </p>
-              <p className="text-sm text-gray-600">ชั่วโมงออกกำลังกาย</p>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <p className="text-2xl font-bold text-purple-600">
-                {user.totalDistance.toFixed(1)}
-              </p>
-              <p className="text-sm text-gray-600">กิโลเมตร</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          ))}
+        </div>
 
-      {/* Danger Zone */}
-      <Card className="border-red-200">
-        <CardHeader>
-          <CardTitle className="text-red-600">Danger Zone</CardTitle>
-          <CardDescription>
-            การกระทำเหล่านี้ไม่สามารถย้อนกลับได้
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+        {/* 2-col forms */}
+        <div className="pp-2col">
+          <EditProfileForm user={user} onUpdate={fetchProfile}/>
+          <ChangePasswordForm/>
+        </div>
+
+        {/* Danger Zone */}
+        <div className="pp-danger">
+          <div className="pp-danger-title"><Trash2 size={13}/> Danger Zone</div>
+          <div className="pp-danger-sub">การกระทำเหล่านี้ไม่สามารถย้อนกลับได้</div>
+          <div className="pp-danger-row">
             <div>
-              <h4 className="font-semibold text-red-900">ลบบัญชี</h4>
-              <p className="text-sm text-red-700">
-                ลบบัญชีและข้อมูลทั้งหมดอย่างถาวร
-              </p>
+              <div style={{ fontSize:13, fontWeight:600, color:'#fca5a5', marginBottom:3 }}>ลบบัญชี</div>
+              <div style={{ fontSize:12, color:'rgba(255,255,255,.45)' }}>ลบบัญชีและข้อมูลทั้งหมดอย่างถาวร</div>
             </div>
-            <Button
-              variant="destructive"
-              onClick={() => setShowDeleteDialog(true)}
-              className="gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              ลบบัญชี
-            </Button>
+            <button className="pp-danger-del-btn" onClick={() => setShowDelete(true)}>
+              <Trash2 size={13}/> ลบบัญชี
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Delete Account Dialog */}
-      <DeleteAccountDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-      />
-    </div>
+      <DeleteAccountDialog open={showDelete} onOpenChange={setShowDelete}/>
+    </>
   )
 }

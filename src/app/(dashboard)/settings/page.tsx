@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useAuthStore } from '@/lib/store/authStore'
+import { useSettingsStore } from '@/lib/store/settingsStore'
 import { Button } from '@/components/ui/button'
 import { toast } from 'react-hot-toast'
 import { Loader2, Save } from 'lucide-react'
@@ -13,12 +14,14 @@ import AccountInfo from '@/components/settings/AccountInfo'
 
 export default function SettingsPage() {
   const { token, user } = useAuthStore()
+  const { weekStartsOn, language, viewMode, setWeekStartsOn, setLanguage, setViewMode } = useSettingsStore()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [hasChanges, setHasChanges] = useState(false)
-  
+  const [isDirty, setIsDirty] = useState(false)
+  const originalRef = useRef<string>('')
+
   const [settings, setSettings] = useState({
-    theme: 'light',
+    theme: 'dark',
     notifications: {
       email: true,
       push: false,
@@ -32,21 +35,28 @@ export default function SettingsPage() {
     }
   })
 
+  useEffect(() => { fetchSettings() }, [])
+
+  // track changes vs original
   useEffect(() => {
-    fetchSettings()
-  }, [])
+    if (!loading) {
+      setIsDirty(JSON.stringify(settings) !== originalRef.current)
+    }
+  }, [settings])
 
   const fetchSettings = async () => {
     try {
       const response = await fetch('/api/settings', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       })
-
       if (response.ok) {
         const data = await response.json()
         setSettings(data.settings)
+        originalRef.current = JSON.stringify(data.settings)
+        const p = data.settings?.preferences
+        if (p?.weekStartsOn)        setWeekStartsOn(p.weekStartsOn)
+        if (p?.language)            setLanguage(p.language)
+        if (p?.defaultWorkoutView)  setViewMode(p.defaultWorkoutView)
       }
     } catch (error) {
       console.error('Fetch settings error:', error)
@@ -58,38 +68,25 @@ export default function SettingsPage() {
 
   const handleThemeChange = (theme: string) => {
     if (theme === 'light') {
-      setSettings({ ...settings, theme })
-      setHasChanges(true)
+      setSettings(prev => ({ ...prev, theme }))
     } else {
       toast('ธีมนี้จะเปิดใช้งานในเวอร์ชันถัดไป', { icon: '🚀' })
     }
   }
 
   const handleNotificationChange = (key: string, value: boolean) => {
-    setSettings({
-      ...settings,
-      notifications: {
-        ...settings.notifications,
-        [key]: value
-      }
-    })
-    setHasChanges(true)
+    setSettings(prev => ({ ...prev, notifications: { ...prev.notifications, [key]: value } }))
   }
 
   const handlePreferenceChange = (key: string, value: string) => {
-    setSettings({
-      ...settings,
-      preferences: {
-        ...settings.preferences,
-        [key]: value
-      }
-    })
-    setHasChanges(true)
+    setSettings(prev => ({ ...prev, preferences: { ...prev.preferences, [key]: value } }))
+    if (key === 'weekStartsOn')           setWeekStartsOn(value as 'sunday' | 'monday')
+    else if (key === 'language')           setLanguage(value as 'th' | 'en')
+    else if (key === 'defaultWorkoutView') setViewMode(value as 'list' | 'grid')
   }
 
   const handleSave = async () => {
     setSaving(true)
-    
     try {
       const response = await fetch('/api/settings', {
         method: 'PUT',
@@ -99,15 +96,17 @@ export default function SettingsPage() {
         },
         body: JSON.stringify(settings)
       })
-
       if (response.ok) {
+        originalRef.current = JSON.stringify(settings)
+        setIsDirty(false)
         toast.success('บันทึกการตั้งค่าสำเร็จ!')
-        setHasChanges(false)
       } else {
+        const err = await response.json()
+        console.error('Save error:', err)
         toast.error('ไม่สามารถบันทึกได้')
       }
     } catch (error) {
-      console.error('Save settings error:', error)
+      console.error('Save error:', error)
       toast.error('เกิดข้อผิดพลาด')
     } finally {
       setSaving(false)
@@ -127,105 +126,68 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">⚙️ การตั้งค่า</h1>
-          <p className="text-gray-600 mt-1">
-            จัดการการตั้งค่าและความชอบส่วนตัว
-          </p>
+          <h1 className="text-3xl font-bold" style={{ color: 'rgb(255, 255, 255)' }}>⚙️ การตั้งค่า</h1>
+          <p className="mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>จัดการการตั้งค่าและความชอบส่วนตัว</p>
         </div>
-        {hasChanges && (
-          <Button onClick={handleSave} disabled={saving} className="gap-2">
+
+        {/* Save button — แสดงเฉพาะเมื่อมีการเปลี่ยนแปลง */}
+        <div style={{
+          transition: 'opacity .2s, transform .2s',
+          opacity: isDirty ? 1 : 0,
+          transform: isDirty ? 'translateY(0)' : 'translateY(-6px)',
+          pointerEvents: isDirty ? 'auto' : 'none',
+        }}>
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              background: 'linear-gradient(135deg, #818cf8, #7c3aed)',
+              border: 'none',
+              borderRadius: 12,
+              padding: '10px 24px',
+              fontWeight: 600,
+              fontSize: 14,
+            }}
+          >
             {saving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                กำลังบันทึก...
-              </>
+              <><Loader2 className="h-4 w-4 animate-spin mr-2" />กำลังบันทึก...</>
             ) : (
-              <>
-                <Save className="h-4 w-4" />
-                บันทึกการเปลี่ยนแปลง
-              </>
+              <><Save className="h-4 w-4 mr-2" />บันทึกการตั้งค่า</>
             )}
           </Button>
-        )}
+        </div>
       </div>
 
-      {/* Changes Indicator */}
-      {hasChanges && (
-        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center justify-between">
-          <p className="text-sm text-yellow-800">
-            📝 คุณมีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก
-          </p>
-          <Button onClick={handleSave} disabled={saving} size="sm">
-            บันทึก
-          </Button>
-        </div>
-      )}
-
-      {/* Two Columns Layout */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - 2/3 */}
         <div className="lg:col-span-2 space-y-6">
-          <ThemeSettings 
-            theme={settings.theme}
-            onThemeChange={handleThemeChange}
-          />
-
-          <NotificationSettings
-            notifications={settings.notifications}
-            onNotificationChange={handleNotificationChange}
-          />
-
+          <ThemeSettings theme={settings.theme} onThemeChange={handleThemeChange} />
+          <NotificationSettings notifications={settings.notifications} onNotificationChange={handleNotificationChange} />
           <PreferencesSettings
             preferences={settings.preferences}
             onPreferenceChange={handlePreferenceChange}
           />
-
           <DataExport />
         </div>
 
-        {/* Right Column - 1/3 */}
         <div className="space-y-6">
           <AccountInfo user={user} />
-
-          {/* App Info */}
-          <div className="p-4 border rounded-lg space-y-3">
+          <div className="p-4 border rounded-lg space-y-3" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
             <h4 className="font-semibold">ข้อมูลแอพพลิเคชัน</h4>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">เวอร์ชัน</span>
-                <span className="font-medium">1.0.0</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">สร้างโดย</span>
-                <span className="font-medium">Fitness Team</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">ปีที่พัฒนา</span>
-                <span className="font-medium">2025</span>
-              </div>
+              <div className="flex justify-between"><span style={{ color: 'rgba(255,255,255,0.5)' }}>เวอร์ชัน</span><span className="font-medium">1.0.0</span></div>
+              <div className="flex justify-between"><span style={{ color: 'rgba(255,255,255,0.5)' }}>สร้างโดย</span><span className="font-medium">Fitness Team</span></div>
+              <div className="flex justify-between"><span style={{ color: 'rgba(255,255,255,0.5)' }}>ปีที่พัฒนา</span><span className="font-medium">2025</span></div>
             </div>
-            <div className="pt-3 border-t">
-              <p className="text-xs text-gray-500">
-                พัฒนาด้วย Next.js 14, Prisma, และ shadcn/ui
-              </p>
+            <div className="pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>พัฒนาด้วย Next.js 14, Prisma, และ shadcn/ui</p>
             </div>
           </div>
-
-          {/* Support */}
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h4 className="font-semibold text-blue-900 mb-2">
-              ต้องการความช่วยเหลือ?
-            </h4>
-            <p className="text-sm text-blue-800 mb-3">
-              ติดต่อทีมสนับสนุนหรือดูคู่มือการใช้งาน
-            </p>
+          <div className="p-4 rounded-lg" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
+            <h4 className="font-semibold mb-2" style={{ color: '#a5b4fc' }}>ต้องการความช่วยเหลือ?</h4>
+            <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.6)' }}>ติดต่อทีมสนับสนุนหรือดูคู่มือการใช้งาน</p>
             <div className="space-y-2">
-              <Button variant="outline" size="sm" className="w-full">
-                📚 คู่มือการใช้งาน
-              </Button>
-              <Button variant="outline" size="sm" className="w-full">
-                💬 ติดต่อสนับสนุน
-              </Button>
+              <Button variant="outline" size="sm" className="w-full">📚 คู่มือการใช้งาน</Button>
+              <Button variant="outline" size="sm" className="w-full">💬 ติดต่อสนับสนุน</Button>
             </div>
           </div>
         </div>
