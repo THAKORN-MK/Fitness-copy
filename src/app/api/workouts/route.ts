@@ -11,7 +11,7 @@ const workoutSchema = z.object({
   distanceKm: z.number().min(0).max(999.99).optional().nullable(),
   intensity: z.enum(['low', 'medium', 'high']).default('medium'),
   notes: z.string().optional().nullable(),
-  exerciseDate: z.string().datetime(),
+  exerciseDate: z.string().min(1), // ✅ แก้: รับ local datetime string ได้ เช่น "2026-03-13T12:00"
 })
 
 // GET - List all workouts
@@ -87,6 +87,9 @@ export async function POST(request: NextRequest) {
     
     // Validate data
     const validatedData = workoutSchema.parse(body)
+
+    // ✅ แปลง local datetime string → Date (UTC)
+    const exerciseDate = new Date(validatedData.exerciseDate)
     
     // Create workout
     const workout = await prisma.workout.create({
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest) {
         distanceKm: validatedData.distanceKm,
         intensity: validatedData.intensity,
         notes: validatedData.notes,
-        exerciseDate: new Date(validatedData.exerciseDate),
+        exerciseDate,
       }
     })
     
@@ -109,11 +112,11 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     if (error instanceof z.ZodError) {
-  return NextResponse.json(
-    { error: 'ข้อมูลไม่ถูกต้อง', details: error.issues },
-    { status: 400 }
-  )
-}
+      return NextResponse.json(
+        { error: 'ข้อมูลไม่ถูกต้อง', details: error.issues },
+        { status: 400 }
+      )
+    }
     
     console.error('Create workout error:', error)
     return NextResponse.json(

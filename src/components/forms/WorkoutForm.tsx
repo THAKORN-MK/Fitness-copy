@@ -46,10 +46,6 @@ function calcCalories(type: string, durationMin: number, distanceKm?: number): n
   return Math.round(met * WEIGHT * hours)
 }
 
-/**
- * แปลง Date → "YYYY-MM-DDTHH:mm" ตาม local timezone
- * ใช้แทน .toISOString().slice(0,16) ซึ่งจะได้ UTC time
- */
 function toLocalDatetimeInput(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
@@ -78,8 +74,6 @@ export default function WorkoutForm({ mode, initialData, workoutId }: WorkoutFor
     distanceKm:      initialData?.distanceKm      ?? '',
     caloriesBurned:  initialData?.caloriesBurned  ?? '',
     notes:           initialData?.notes           ?? '',
-    // ✅ แก้: ใช้ toLocalDatetimeInput แทน .toISOString().slice(0,16)
-    // เพื่อให้ default value เป็นเวลาปัจจุบันตาม timezone ของเครื่อง
     exerciseDate: initialData?.exerciseDate
       ? toLocalDatetimeInput(new Date(initialData.exerciseDate))
       : toLocalDatetimeInput(new Date()),
@@ -160,9 +154,8 @@ export default function WorkoutForm({ mode, initialData, workoutId }: WorkoutFor
         distanceKm:      distVal && distVal > 0 ? distVal : null,
         intensity:       'medium',
         notes:           form.notes || null,
-        // ✅ แก้: ส่งเป็น local ISO string โดยไม่แปลงเป็น UTC
-        // "2025-03-13T21:57" → ส่งตรงๆ ไม่แปลงผ่าน new Date().toISOString()
-        // backend จะได้เวลาที่ user กรอกจริงๆ
+        // ✅ ส่ง local string ตรงๆ เช่น "2026-03-13T12:00"
+        // backend จะเติม +07:00 ให้เองใน route.ts
         exerciseDate: form.exerciseDate,
       }
       const url    = mode === 'edit' ? `/api/workouts/${workoutId}` : '/api/workouts'

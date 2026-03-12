@@ -47,11 +47,7 @@ const TYPE_GLOW: Record<string, string> = {
  * "2025-03-13T08:00:00"       → ไม่มี suffix อยู่แล้ว → local 08:00 ✓
  */
 function toLocalDate(raw: string): Date {
-  const s = raw
-    .replace('Z', '')                      // ตัด UTC marker
-    .replace(/[+-]\d{2}:\d{2}$/, '')       // ตัด offset เช่น +07:00
-    .replace(' ', 'T')                     // รองรับ "2025-03-13 08:00:00"
-  return new Date(s)
+  return new Date(raw) // ✅ ให้ JS แปลง UTC → local เองตามปกติ
 }
 
 export default function WorkoutCard({ workout, onDelete }: WorkoutCardProps) {

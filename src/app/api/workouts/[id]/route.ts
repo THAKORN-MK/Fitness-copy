@@ -10,15 +10,15 @@ const workoutSchema = z.object({
   distanceKm: z.number().min(0).max(999.99).optional().nullable(),
   intensity: z.enum(['low', 'medium', 'high']),
   notes: z.string().optional().nullable(),
-  exerciseDate: z.string().datetime(),
+  exerciseDate: z.string().min(1), // ✅ แก้: รับทั้ง local และ ISO string
 })
 
 // GET - Get single workout
 export async function GET(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> } // 1. แก้ Type ตรงนี้
+  props: { params: Promise<{ id: string }> }
 ) {
-  const params = await props.params; // 2. ดึงค่าออกมาใช้ (เพิ่มแค่นี้)
+  const params = await props.params;
 
   try {
     const authHeader = request.headers.get('authorization')
@@ -33,7 +33,7 @@ export async function GET(
     const workout = await prisma.workout.findFirst({
       where: {
         id: params.id,
-        userId // ต้องเป็นของ user เท่านั้น
+        userId
       }
     })
     
@@ -58,9 +58,9 @@ export async function GET(
 // PUT - Update workout
 export async function PUT(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> } // 1. แก้ Type ตรงนี้
+  props: { params: Promise<{ id: string }> }
 ) {
-  const params = await props.params; // 2. ดึงค่าออกมาใช้ (เพิ่มแค่นี้)
+  const params = await props.params;
 
   try {
     const authHeader = request.headers.get('authorization')
@@ -73,7 +73,6 @@ export async function PUT(
     const { userId } = verifyToken(token)
     const body = await request.json()
     
-    // Check if workout exists and belongs to user
     const existingWorkout = await prisma.workout.findFirst({
       where: {
         id: params.id,
@@ -88,10 +87,8 @@ export async function PUT(
       )
     }
     
-    // Validate data
     const validatedData = workoutSchema.parse(body)
     
-    // Update workout
     const workout = await prisma.workout.update({
       where: { id: params.id },
       data: {
@@ -101,7 +98,7 @@ export async function PUT(
         distanceKm: validatedData.distanceKm,
         intensity: validatedData.intensity,
         notes: validatedData.notes,
-        exerciseDate: new Date(validatedData.exerciseDate),
+        exerciseDate: new Date(validatedData.exerciseDate), // ✅ แปลงเป็น Date object
       }
     })
     
@@ -128,9 +125,9 @@ export async function PUT(
 // DELETE - Delete workout
 export async function DELETE(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> } // 1. แก้ Type ตรงนี้
+  props: { params: Promise<{ id: string }> }
 ) {
-  const params = await props.params; // 2. ดึงค่าออกมาใช้ (เพิ่มแค่นี้)
+  const params = await props.params;
 
   try {
     const authHeader = request.headers.get('authorization')
@@ -142,7 +139,6 @@ export async function DELETE(
     
     const { userId } = verifyToken(token)
     
-    // Check if workout exists and belongs to user
     const existingWorkout = await prisma.workout.findFirst({
       where: {
         id: params.id,
@@ -157,7 +153,6 @@ export async function DELETE(
       )
     }
     
-    // Delete workout
     await prisma.workout.delete({
       where: { id: params.id }
     })
