@@ -352,22 +352,45 @@ export default function DashboardPage() {
         }
 
         /* ── quick actions ── */
-        .qa { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px }
+        .qa {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+          gap: 8px;
+        }
         .qa-btn {
-          height:44px; border-radius:12px; border:none; cursor:pointer;
-          font-family:'Syne',sans-serif; font-size:13px; font-weight:700;
-          display:flex; align-items:center; justify-content:center; gap:7px;
-          text-decoration:none; transition:all .18s;
-          color:rgba(255,255,255,.7);
-          background:rgba(255,255,255,.04);
-          border:1px solid rgba(255,255,255,.08);
+          height: 48px;
+          border-radius: 12px;
+          cursor: pointer;
+          font-family: 'Syne', sans-serif;
+          font-size: 13px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          text-decoration: none;
+          transition: all .18s;
+          color: rgba(255,255,255,.55);
+          background: rgba(255,255,255,.04);
+          border: 0.5px solid rgba(255,255,255,.1);
         }
-        .qa-btn:hover { background:rgba(129,140,248,.13); border-color:rgba(129,140,248,.28); color:#fff; transform:translateY(-2px) }
+        .qa-btn:hover {
+          background: rgba(255,255,255,.08);
+          border-color: rgba(255,255,255,.18);
+          color: rgba(255,255,255,.9);
+          transform: translateY(-2px);
+        }
         .qa-pri {
-          background:linear-gradient(135deg,#4c1d95,#7c3aed,#be185d); border:none; color:#fff;
-          box-shadow:0 4px 16px rgba(124,58,237,.4); border-radius:12px;
+          background: linear-gradient(135deg, #4c1d95, #7c3aed, #be185d);
+          border: none;
+          color: #fff;
+          box-shadow: 0 2px 12px rgba(124,58,237,.35);
         }
-        .qa-pri:hover { box-shadow:0 8px 28px rgba(124,58,237,.6); border:none }
+        .qa-pri:hover {
+          box-shadow: 0 6px 22px rgba(124,58,237,.55);
+          border: none;
+          color: #fff;
+        }
 
         /* ── bottom grid ── */
         .bg2 { display:grid; grid-template-columns:1fr 1fr; gap:12px }
@@ -683,7 +706,7 @@ export default function DashboardPage() {
         </div>
         <div className="qa">
           <Link href="/workouts/new" className="qa-btn qa-pri"><Plus size={13}/> เพิ่มการออกกำลังกาย</Link>
-          <Link href="/goals"        className="qa-btn">🎯 ตั้งเป้าหมาย</Link>
+          <Link href="/goals"        className="qa-btn" >🎯 ตั้งเป้าหมาย</Link>
           <Link href="/analytics"    className="qa-btn">📊 ดูสถิติ</Link>
           <Link href="/profile"      className="qa-btn">👤 โปรไฟล์</Link>
         </div>

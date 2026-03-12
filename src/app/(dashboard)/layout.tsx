@@ -14,13 +14,18 @@ export default function DashboardLayout({
   const router = useRouter()
   const { isAuthenticated, token } = useAuthStore()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [hydrated, setHydrated] = useState(false)
+
+  // ✅ รอให้ Zustand hydrate จาก localStorage ก่อนค่อย redirect
+  useEffect(() => { setHydrated(true) }, [])
 
   useEffect(() => {
-    if (!isAuthenticated || !token) {
+    if (hydrated && (!isAuthenticated || !token)) {
       router.push('/login')
     }
-  }, [isAuthenticated, token, router])
+  }, [hydrated, isAuthenticated, token, router])
 
+  if (!hydrated) return null
   if (!isAuthenticated || !token) return null
 
   return (

@@ -23,9 +23,9 @@ type MenuItem = {
 const menuItems: MenuItem[] = [
   { label: 'Dashboard',       icon: LayoutDashboard, href: '/dashboard' },
   { label: 'เป้าหมาย',       icon: Target,          href: '/goals'     },
-  { label: 'การออกกำลังกาย', icon: Activity,        href: '/workouts'  },
-  { label: 'สถิติ',           icon: BarChart3,       href: '/analytics' },
   
+  { label: 'สถิติ',           icon: BarChart3,       href: '/analytics' },
+  { label: 'การออกกำลังกาย', icon: Activity,        href: '/workouts'  },
   { label: 'โปรไฟล์',        icon: User,            href: '/profile'   },
   { label: 'ตั้งค่า',         icon: Settings,        href: '/settings'  },
 ]
