@@ -5,7 +5,7 @@ import { useAuthStore } from '@/lib/store/authStore'
 import { toast } from 'react-hot-toast'
 import { Plus, Search, Activity, SlidersHorizontal, X } from 'lucide-react'
 import Link from 'next/link'
-import WorkoutCard from '@/components/workouts/WorkoutCard'
+import WorkoutCard from '@/components/workout/WorkoutCard'
 
 const TYPE_FILTERS = [
   { value:'all',    label:'ทั้งหมด' },
