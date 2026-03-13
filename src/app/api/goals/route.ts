@@ -37,9 +37,20 @@ export async function GET(request: NextRequest) {
       orderBy: [{ status: 'asc' }, { endDate: 'asc' }],
     })
 
-    // compute current progress + auto-resolve status
     const now = new Date()
     const goalsWithProgress = await Promise.all(goals.map(async (g) => {
+      const targetNum = Number(g.targetValue ?? 0)
+
+      // ── ถ้า completed แล้ว → ไม่ต้อง aggregate ใหม่ คืน targetValue ตรงๆ
+      if (g.status === 'completed') {
+        return {
+          ...g,
+          currentValue: targetNum,
+          progress: 100,
+        }
+      }
+
+      // ── ถ้า failed แล้ว → aggregate ตามจริง แต่ไม่ต้อง auto-resolve อีก
       const agg = await prisma.workout.aggregate({
         where: {
           userId,
@@ -51,29 +62,38 @@ export async function GET(request: NextRequest) {
 
       let currentValue = 0
       switch (g.targetType) {
-        case 'workouts': currentValue = agg._count?.id ?? 0;                            break
-        case 'calories': currentValue = Number(agg._sum?.caloriesBurned  ?? 0);         break
-        case 'duration': currentValue = Number(agg._sum?.durationMinutes ?? 0);         break
-        case 'distance': currentValue = Number(agg._sum?.distanceKm      ?? 0);         break
+        case 'workouts': currentValue = agg._count?.id ?? 0;                    break
+        case 'calories': currentValue = Number(agg._sum?.caloriesBurned  ?? 0); break
+        case 'duration': currentValue = Number(agg._sum?.durationMinutes ?? 0); break
+        case 'distance': currentValue = Number(agg._sum?.distanceKm      ?? 0); break
       }
 
-      const targetNum = Number(g.targetValue ?? 0)
-      const pct       = targetNum > 0 ? Math.min(100, (currentValue / targetNum) * 100) : 0
-      const isOver    = now > new Date(g.endDate)
+      const pct    = targetNum > 0 ? Math.min(100, (currentValue / targetNum) * 100) : 0
+      const isOver = now > new Date(g.endDate)
 
-      // auto-resolve: mark completed/failed if not already
+      // auto-resolve: active → completed/failed
       let resolvedStatus = g.status
       if (g.status === 'active') {
-        if (pct >= 100)      resolvedStatus = 'completed'
-        else if (isOver)     resolvedStatus = 'failed'
+        if (pct >= 100)  resolvedStatus = 'completed'
+        else if (isOver) resolvedStatus = 'failed'
       }
 
-      // persist status change if different
+      // persist status change
       if (resolvedStatus !== g.status) {
         await prisma.goal.update({
           where: { id: g.id },
           data:  { status: resolvedStatus as any }
-        }).catch(() => {/* ignore */})
+        }).catch(() => {})
+
+        // ถ้าเพิ่ง completed → cap currentValue ที่ target
+        if (resolvedStatus === 'completed') {
+          return {
+            ...g,
+            status: 'completed',
+            currentValue: targetNum,
+            progress: 100,
+          }
+        }
       }
 
       return {
@@ -119,7 +139,7 @@ export async function POST(request: NextRequest) {
         description: data.description,
         targetType:  data.targetType,
         targetValue: data.targetValue,
-        period:      'custom',   // keep schema happy; UI no longer uses period
+        period:      'custom',
         startDate,
         endDate,
         status: 'active',
